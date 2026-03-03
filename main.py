@@ -6,7 +6,7 @@ from __future__ import annotations
 #     "camoufox[geoip]",
 #     "markdownify",
 #     "beautifulsoup4",
-#     "httpx",
+#     "httpx[socks]",
 # ]
 # ///
 
@@ -101,7 +101,7 @@ async def download_image(
             filepath.write_bytes(resp.content)
             return img_url, f"images/{filename}"
         except Exception as e:
-            print(f"  ⚠ 图片下载失败: {e}")
+            print(f"  ⚠ 图片下载失败: {e}", file=sys.stderr)
             return img_url, None
 
 
@@ -112,7 +112,10 @@ async def download_all_images(
     if not img_urls:
         return {}
 
-    print(f"🖼  下载 {len(img_urls)} 张图片 (并发 {IMAGE_CONCURRENCY})...")
+    print(
+        f"🖼  下载 {len(img_urls)} 张图片 (并发 {IMAGE_CONCURRENCY})...",
+        file=sys.stderr,
+    )
     semaphore = asyncio.Semaphore(IMAGE_CONCURRENCY)
 
     async with httpx.AsyncClient() as client:
@@ -128,7 +131,7 @@ async def download_all_images(
             url_map[remote_url] = local_path
 
     downloaded = sum(1 for v in url_map.values() if v)
-    print(f"  ✅ {downloaded}/{len(img_urls)}")
+    print(f"  ✅ {downloaded}/{len(img_urls)}", file=sys.stderr)
     return url_map
 
 
@@ -283,10 +286,10 @@ async def _fetch_article_core(
     url: str, *, download_images: bool = True, output_dir: Path | None = None,
 ) -> tuple[str, dict]:
     """内部实现：返回 (markdown_text, metadata_dict)。"""
-    print(f"🔄 正在抓取: {url}")
+    print(f"🔄 正在抓取: {url}", file=sys.stderr)
 
     # 使用 Camoufox 反检测浏览器获取完整 HTML
-    print("🦊 启动 Camoufox 浏览器...")
+    print("🦊 启动 Camoufox 浏览器...", file=sys.stderr)
     async with AsyncCamoufox(headless=True) as browser:
         page = await browser.new_page()
         await page.goto(url, wait_until="domcontentloaded")
@@ -308,9 +311,9 @@ async def _fetch_article_core(
         raise RuntimeError("未能提取到文章标题，可能触发了验证码")
 
     meta["source_url"] = url
-    print(f"📄 标题: {meta['title']}")
-    print(f"👤 作者: {meta['author']}")
-    print(f"📅 时间: {meta['publish_time']}")
+    print(f"📄 标题: {meta['title']}", file=sys.stderr)
+    print(f"👤 作者: {meta['author']}", file=sys.stderr)
+    print(f"📅 时间: {meta['publish_time']}", file=sys.stderr)
 
     # 处理正文
     content_html, code_blocks, img_urls = process_content(soup)
@@ -339,7 +342,7 @@ async def fetch_article(url: str) -> None:
     try:
         result, meta = await _fetch_article_core(url, download_images=True)
     except RuntimeError as e:
-        print(f"❌ {e}")
+        print(f"❌ {e}", file=sys.stderr)
         sys.exit(1)
 
     safe_title = re.sub(r'[/\\?%*:|"<>]', "_", meta["title"])[:80]
@@ -349,24 +352,27 @@ async def fetch_article(url: str) -> None:
     md_path = article_dir / f"{safe_title}.md"
     md_path.write_text(result, encoding="utf-8")
 
-    print(f"✅ 已保存: {md_path}")
-    print(f"📊 Markdown 约 {len(result)} 字符")
+    print(f"✅ 已保存: {md_path}", file=sys.stderr)
+    print(f"📊 Markdown 约 {len(result)} 字符", file=sys.stderr)
 
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python main.py <wechat-article-url>")
+        print("Usage: python main.py <wechat-article-url>", file=sys.stderr)
         sys.exit(1)
 
     url = sys.argv[1]
     if not url.startswith("https://mp.weixin.qq.com/"):
-        print("❌ 请输入有效的微信文章 URL (https://mp.weixin.qq.com/...)")
+        print(
+            "❌ 请输入有效的微信文章 URL (https://mp.weixin.qq.com/...)",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     try:
         asyncio.run(fetch_article(url))
     except Exception as e:
-        print(f"❌ 抓取失败: {e}")
+        print(f"❌ 抓取失败: {e}", file=sys.stderr)
         sys.exit(1)
 
 

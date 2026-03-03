@@ -1,5 +1,5 @@
 camoufox[geoip]
 markdownify
 beautifulsoup4
-httpx
+httpx[socks]
 fastmcp>=2.14.0

@@ -94,7 +94,9 @@ python mcp_server.py --sse
 
 | 工具名 | 说明 | 参数 |
 |--------|------|------|
-| `fetch_wechat_article` | 抓取微信文章并转为 Markdown | `url` (必填), `download_images` (可选, 默认 true) |
+| `fetch_wechat_article` | 抓取微信文章并转为 Markdown | `url` (必填), `download_images` (可选, 默认 true), `output_dir` (可选) |
+
+> 说明：当传入 `output_dir` 时，会将 Markdown 文件与图片保存到该目录下，并在返回内容中提示保存路径。
 
 ## 技术方案
 
