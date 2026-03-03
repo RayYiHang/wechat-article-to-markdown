@@ -264,7 +264,25 @@ def build_markdown(meta: dict, body_md: str) -> str:
 # ============================================================
 
 
-async def fetch_article(url: str) -> None:
+async def fetch_article_as_markdown(
+    url: str, *, download_images: bool = True, output_dir: Path | None = None,
+) -> str:
+    """
+    抓取微信公众号文章并转换为 Markdown。
+
+    返回完整 Markdown 文本。当 *download_images* 为 True 时，图片会被下载
+    到 *output_dir* (默认 OUTPUT_DIR) 下对应目录，Markdown 中使用本地路径。
+    """
+    md, _meta = await _fetch_article_core(
+        url, download_images=download_images, output_dir=output_dir,
+    )
+    return md
+
+
+async def _fetch_article_core(
+    url: str, *, download_images: bool = True, output_dir: Path | None = None,
+) -> tuple[str, dict]:
+    """内部实现：返回 (markdown_text, metadata_dict)。"""
     print(f"🔄 正在抓取: {url}")
 
     # 使用 Camoufox 反检测浏览器获取完整 HTML
@@ -287,11 +305,7 @@ async def fetch_article(url: str) -> None:
     # 提取元数据
     meta = extract_metadata(soup, html)
     if not meta["title"]:
-        print("❌ 未能提取到文章标题，可能触发了验证码")
-        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        (OUTPUT_DIR / "debug.html").write_text(html, encoding="utf-8")
-        print("已保存原始 HTML 到 output/debug.html")
-        sys.exit(1)
+        raise RuntimeError("未能提取到文章标题，可能触发了验证码")
 
     meta["source_url"] = url
     print(f"📄 标题: {meta['title']}")
@@ -301,28 +315,42 @@ async def fetch_article(url: str) -> None:
     # 处理正文
     content_html, code_blocks, img_urls = process_content(soup)
     if not content_html:
-        print("❌ 未能提取到正文内容")
-        sys.exit(1)
+        raise RuntimeError("未能提取到正文内容")
 
     # 转 Markdown
     md = convert_to_markdown(content_html, code_blocks)
 
     # 下载图片
+    if download_images:
+        base = output_dir or OUTPUT_DIR
+        safe_title = re.sub(r'[/\\?%*:|"<>]', "_", meta["title"])[:80]
+        article_dir = base / safe_title
+        img_dir = article_dir / "images"
+        img_dir.mkdir(parents=True, exist_ok=True)
+
+        url_map = await download_all_images(img_urls, img_dir)
+        md = replace_image_urls(md, url_map)
+
+    return build_markdown(meta, md), meta
+
+
+async def fetch_article(url: str) -> None:
+    """CLI 入口：抓取文章、下载图片并保存到本地文件。"""
+    try:
+        result, meta = await _fetch_article_core(url, download_images=True)
+    except RuntimeError as e:
+        print(f"❌ {e}")
+        sys.exit(1)
+
     safe_title = re.sub(r'[/\\?%*:|"<>]', "_", meta["title"])[:80]
     article_dir = OUTPUT_DIR / safe_title
-    img_dir = article_dir / "images"
-    img_dir.mkdir(parents=True, exist_ok=True)
+    article_dir.mkdir(parents=True, exist_ok=True)
 
-    url_map = await download_all_images(img_urls, img_dir)
-    md = replace_image_urls(md, url_map)
-
-    # 写入文件
-    result = build_markdown(meta, md)
     md_path = article_dir / f"{safe_title}.md"
     md_path.write_text(result, encoding="utf-8")
 
     print(f"✅ 已保存: {md_path}")
-    print(f"📊 Markdown 约 {len(md)} 字符")
+    print(f"📊 Markdown 约 {len(result)} 字符")
 
 
 def main():
