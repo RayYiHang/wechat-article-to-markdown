@@ -30,8 +30,6 @@ async def fetch_wechat_article(url: str, download_images: bool = True) -> str:
         markdown = await fetch_article_as_markdown(
             url, download_images=download_images,
         )
-    except RuntimeError as e:
-        return f"❌ 抓取失败: {e}"
     except Exception as e:
         return f"❌ 抓取失败: {e}"
 

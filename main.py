@@ -273,6 +273,16 @@ async def fetch_article_as_markdown(
     返回完整 Markdown 文本。当 *download_images* 为 True 时，图片会被下载
     到 *output_dir* (默认 OUTPUT_DIR) 下对应目录，Markdown 中使用本地路径。
     """
+    md, _meta = await _fetch_article_core(
+        url, download_images=download_images, output_dir=output_dir,
+    )
+    return md
+
+
+async def _fetch_article_core(
+    url: str, *, download_images: bool = True, output_dir: Path | None = None,
+) -> tuple[str, dict]:
+    """内部实现：返回 (markdown_text, metadata_dict)。"""
     print(f"🔄 正在抓取: {url}")
 
     # 使用 Camoufox 反检测浏览器获取完整 HTML
@@ -321,21 +331,18 @@ async def fetch_article_as_markdown(
         url_map = await download_all_images(img_urls, img_dir)
         md = replace_image_urls(md, url_map)
 
-    return build_markdown(meta, md)
+    return build_markdown(meta, md), meta
 
 
 async def fetch_article(url: str) -> None:
     """CLI 入口：抓取文章、下载图片并保存到本地文件。"""
     try:
-        result = await fetch_article_as_markdown(url)
+        result, meta = await _fetch_article_core(url, download_images=True)
     except RuntimeError as e:
         print(f"❌ {e}")
         sys.exit(1)
 
-    # 从 Markdown 标题行推断文件名
-    first_line = result.split("\n", 1)[0]
-    title = first_line.lstrip("# ").strip() or "untitled"
-    safe_title = re.sub(r'[/\\?%*:|"<>]', "_", title)[:80]
+    safe_title = re.sub(r'[/\\?%*:|"<>]', "_", meta["title"])[:80]
     article_dir = OUTPUT_DIR / safe_title
     article_dir.mkdir(parents=True, exist_ok=True)
 
