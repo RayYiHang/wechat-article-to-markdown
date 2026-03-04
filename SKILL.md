@@ -17,9 +17,27 @@ Use this skill when you need to save WeChat articles as Markdown for:
 ## Prerequisites
 
 - Python 3.8+
-- `uv` installed (recommended)
+- `uv` installed (recommended), or install from PyPI:
+
+```bash
+pipx install wechat-article-to-markdown
+```
+
+## Install into Claude Code user directory
+
+```bash
+mkdir -p ~/.claude/skills/wechat-article-to-markdown
+curl -o ~/.claude/skills/wechat-article-to-markdown/SKILL.md \
+  https://raw.githubusercontent.com/jackwener/wechat-article-to-markdown/main/SKILL.md
+```
 
 ## Usage
+
+```bash
+wechat-article-to-markdown "<WECHAT_ARTICLE_URL>"
+```
+
+If running from source repository:
 
 ```bash
 cd /Users/jakevin/kabi-reader/wechat-article-to-markdown
@@ -30,8 +48,8 @@ Input URL format:
 - `https://mp.weixin.qq.com/s/...`
 
 Output files:
-- `output/<article-title>/<article-title>.md`
-- `output/<article-title>/images/*`
+- `<current-working-directory>/output/<article-title>/<article-title>.md`
+- `<current-working-directory>/output/<article-title>/images/*`
 
 ## Features
 

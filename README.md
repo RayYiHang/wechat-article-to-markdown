@@ -76,7 +76,7 @@ This project ships with [`SKILL.md`](./SKILL.md), so AI agents can discover and 
 ### Claude Code / Antigravity
 
 ```bash
-# Clone into your project's skills directory
+# Project-local skills directory
 mkdir -p .agents/skills
 git clone git@github.com:jackwener/wechat-article-to-markdown.git \
   .agents/skills/wechat-article-to-markdown
@@ -85,6 +85,15 @@ git clone git@github.com:jackwener/wechat-article-to-markdown.git \
 curl -o .agents/skills/wechat-article-to-markdown/SKILL.md \
   https://raw.githubusercontent.com/jackwener/wechat-article-to-markdown/main/SKILL.md
 ```
+
+```bash
+# Claude Code user-level skills directory (global)
+mkdir -p ~/.claude/skills/wechat-article-to-markdown
+curl -o ~/.claude/skills/wechat-article-to-markdown/SKILL.md \
+  https://raw.githubusercontent.com/jackwener/wechat-article-to-markdown/main/SKILL.md
+```
+
+After adding the file, restart Claude Code to reload skills.
 
 ### OpenClaw / ClawHub
 
@@ -134,6 +143,16 @@ wechat-article-to-markdown "https://mp.weixin.qq.com/s/xxxxxxxx"
 ## 作为 AI Agent Skill 使用
 
 项目自带 [`SKILL.md`](./SKILL.md)，可供支持 `.agents/skills/` 约定的 Agent 自动发现。
+
+### Claude Code 用户目录示例
+
+```bash
+mkdir -p ~/.claude/skills/wechat-article-to-markdown
+curl -o ~/.claude/skills/wechat-article-to-markdown/SKILL.md \
+  https://raw.githubusercontent.com/jackwener/wechat-article-to-markdown/main/SKILL.md
+```
+
+添加后重启 Claude Code 以重新加载 skills。
 
 ### OpenClaw / ClawHub
 
