@@ -1,88 +1,128 @@
 # wechat-article-to-markdown
 
-微信公众号文章抓取 & Markdown 转换工具。
+Fetch WeChat Official Account articles and convert them to clean Markdown.
 
-使用 **Camoufox (反检测浏览器) + BeautifulSoup + markdownify** 将微信公众号文章转换为干净的 Markdown 文件，图片自动下载到本地。
+[English](#features) | [中文](#功能特性)
 
-## 功能
+## Features
 
-- 🦊 **反检测抓取** — 使用 Camoufox 反检测浏览器，避免微信 "环境异常" 验证页面
-- 📄 **文章抓取** — 输入 URL，输出结构化 Markdown
-- 🖼 **图片本地化** — 微信 CDN 图片并发下载到本地，Markdown 引用相对路径
-- 💻 **代码块提取** — 正确处理微信 `code-snippet` 代码块，保留语言标识
-- 📅 **元数据保留** — 标题、公众号名称、发布时间、原文链接
-- 🧹 **格式清理** — 去除 `&nbsp;`、多余空行、行尾空格
+- Anti-detection fetching with Camoufox
+- Extract article metadata (title, account name, publish time, source URL)
+- Convert WeChat article HTML to Markdown
+- Download article images to local `images/` and rewrite links
+- Handle WeChat `code-snippet` blocks with language fences
 
-## 快速开始
-
-### 推荐：使用 uv（零配置）
+## Installation
 
 ```bash
-# 首次运行会自动安装依赖和 Camoufox 浏览器
+# Recommended: pipx
+pipx install wechat-article-to-markdown
+
+# Or: uv tool
+uv tool install wechat-article-to-markdown
+```
+
+Or from source:
+
+```bash
+git clone git@github.com:jackwener/wechat-article-to-markdown.git
+cd wechat-article-to-markdown
+uv sync
+```
+
+## Usage
+
+```bash
+# Installed CLI
+wechat-article-to-markdown "https://mp.weixin.qq.com/s/xxxxxxxx"
+
+# Run in repo with uv
+uv run wechat-article-to-markdown "https://mp.weixin.qq.com/s/xxxxxxxx"
+
+# Backward-compatible local entry
 uv run main.py "https://mp.weixin.qq.com/s/xxxxxxxx"
 ```
 
-### 手动安装
+Output structure:
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m camoufox fetch
-python main.py "https://mp.weixin.qq.com/s/xxxxxxxx"
-```
-
-输出目录结构：
-
-```
+```text
 output/
-└── 文章标题/
-    ├── 文章标题.md
+└── <article-title>/
+    ├── <article-title>.md
     └── images/
         ├── img_001.png
         ├── img_002.png
         └── ...
 ```
 
-## 输出示例
+## Use as AI Agent Skill
 
-```markdown
-# 文章标题
+This project ships with [`SKILL.md`](./SKILL.md), so AI agents can discover and use this tool workflow.
 
-> 公众号: xxx
-> 发布时间: 2026-02-28 11:42
-> 原文链接: https://mp.weixin.qq.com/s/...
+### Claude Code / Antigravity
+
+```bash
+# Clone into your project's skills directory
+mkdir -p .agents/skills
+git clone git@github.com:jackwener/wechat-article-to-markdown.git \
+  .agents/skills/wechat-article-to-markdown
+
+# Or copy SKILL.md only
+curl -o .agents/skills/wechat-article-to-markdown/SKILL.md \
+  https://raw.githubusercontent.com/jackwener/wechat-article-to-markdown/main/SKILL.md
+```
+
+### OpenClaw / ClawHub
+
+Officially supports [OpenClaw](https://openclaw.ai) and [ClawHub](https://docs.openclaw.ai/tools/clawhub):
+
+```bash
+clawhub install wechat-article-to-markdown
+```
+
+## PyPI Publishing (GitHub Actions)
+
+Repository: `jackwener/wechat-article-to-markdown`
+Workflow: `.github/workflows/publish.yml`
+Environment: `pypi`
+
+`publish.yml` triggers on `v*` tags and `workflow_dispatch`, builds with `uv build`, then publishes with trusted publishing (`id-token: write`).
 
 ---
 
-正文内容...
+## 功能特性
 
-![](images/img_001.png)
+- 使用 Camoufox 进行反检测抓取
+- 提取标题、公众号名称、发布时间、原文链接
+- 将微信公众号文章 HTML 转换为 Markdown
+- 下载图片到本地 `images/` 并自动替换链接
+- 处理微信 `code-snippet` 代码块并保留语言标识
+
+## 安装
+
+```bash
+# 推荐：pipx
+pipx install wechat-article-to-markdown
+
+# 或者：uv tool
+uv tool install wechat-article-to-markdown
 ```
 
-## 技术方案
+## 使用示例
 
-| 功能 | 方案 |
-|------|------|
-| 页面抓取 | Camoufox (反检测 Firefox + Playwright) |
-| HTML 解析 | BeautifulSoup |
-| HTML → Markdown | markdownify |
-| 图片下载 | httpx async + Semaphore 并发控制 |
+```bash
+wechat-article-to-markdown "https://mp.weixin.qq.com/s/xxxxxxxx"
+```
 
-### 微信文章 HTML 关键结构
+## 作为 AI Agent Skill 使用
 
-| 元素 | 选择器 |
-|------|--------|
-| 标题 | `#activity-name` |
-| 公众号名 | `#js_name` |
-| 发布时间 | JS 变量 `create_time` |
-| 正文 | `#js_content` |
-| 图片 | `img[data-src]` (懒加载) |
-| 代码块 | `.code-snippet__fix` |
+项目自带 [`SKILL.md`](./SKILL.md)，可供支持 `.agents/skills/` 约定的 Agent 自动发现。
 
-## JS 版本
+### OpenClaw / ClawHub
 
-原始 JavaScript 版本保留在 [`js-version`](https://github.com/jackwener/wechat-article-to-markdown/tree/js-version) 分支。
+```bash
+clawhub install wechat-article-to-markdown
+```
 
 ## License
 
