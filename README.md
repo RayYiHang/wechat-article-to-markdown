@@ -97,10 +97,13 @@ clawhub install wechat-article-to-markdown
 ## PyPI Publishing (GitHub Actions)
 
 Repository: `jackwener/wechat-article-to-markdown`
-Workflow: `.github/workflows/publish.yml`
+Workflow: `.github/workflows/release.yml`
 Environment: `pypi`
 
-`publish.yml` triggers on `v*` tags and `workflow_dispatch`, builds with `uv build`, then publishes with trusted publishing (`id-token: write`).
+`release.yml` triggers on `v*` tags, runs unit tests + live e2e tests, then publishes to PyPI with trusted publishing (`id-token: write`).
+
+For release e2e targets, set repository variable `RELEASE_E2E_URLS` (comma-separated article URLs).  
+If not set, workflow falls back to `https://mp.weixin.qq.com/s/Y7dyRC7CJ09miHWU6LBzBA`.
 
 ---
 
